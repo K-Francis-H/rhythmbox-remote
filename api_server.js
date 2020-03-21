@@ -90,7 +90,7 @@ app.get("/rhythmbox/play", function(req, res){
 });
 
 app.get("/rhythmbox/pause", function(req, res){
-	cmd.exe(PAUSE);
+	cmd.exec(PAUSE);
 	res.sendStatus(200);
 });
 
