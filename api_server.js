@@ -17,7 +17,8 @@ const SET_VOLUME = "pactl set-sink-volume 1 $1%";	//NOTE this guy takes a variab
 const PLAY = "rhythmbox-client --play";
 const PAUSE = "rhythmbox-client --pause";
 const STOP = "rhythmbox-client --stop";
-const CURRENT_SONG = "rhythmbox-client  --print-playing-format=\"{ 'artist':'%ta', 'album':'%at', 'track':'%tt', 'duration':'%td', 'elapsed':'%te'}\"";
+//const CURRENT_SONG = "rhythmbox-client  --print-playing-format=\"{ 'artist':'%ta', 'album':'%at', 'track':'%tt', 'duration':'%td', 'elapsed':'%te'}\"";
+CURRENT_SONG = "rhythmbox-client  --print-playing-format=\"%ta\n%at\n%tt\n%td\n%te\n\""
 const NEXT = "rhythmbox-client --next";
 const PREVIOUS = "rhythmbox-client --previous";
 
@@ -112,7 +113,15 @@ app.get("/rhythmbox/previous", function(req, res){
 app.get("/rhythmbox/current-song", function(req, res){
 	cmd.exec(CURRENT_SONG, (error, stdout, stderr) => {
 		try{
-			res.send(stdout);
+			//console.log(stdout);
+			let vals = stdout.split("\n");
+			res.send(JSON.stringify({
+				artist:vals[0],
+				album:vals[1],
+				track:vals[2],
+				duration:vals[3],
+				elapsed:vals[4]
+			}));
 		}catch(e){
 			//uh oh
 			console.log(e);
