@@ -14,9 +14,11 @@ import java.net.URL
 import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
-    val TAG = "MainActivity"
+    private val TAG = "MainActivity"
 
     private val handler = Handler()
+
+    private var volume= 0;
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,12 +43,29 @@ class MainActivity : AppCompatActivity() {
         pause.setOnClickListener { pause()}
         next.setOnClickListener { next() }
 
+        //volume control
+        val volumeLabel = findViewById<TextView>(R.id.volume_label)
 
+        val volumeDown = findViewById<TextView>(R.id.volume_down)
+        val volumeUp = findViewById<TextView>(R.id.volume_up)
+        val volumeMute = findViewById<TextView>(R.id.volume_mute)
+
+        volumeDown.setOnClickListener { setVolume(volume-5) }
+        volumeUp.setOnClickListener { setVolume(volume+5) }
+        volumeMute.setOnClickListener { setVolume(0) }
+
+
+        //TODO make ip dynamically changeable by user and not fixed to my machine
+    }
+
+    override fun onResume() {
+        super.onResume()
 
         updateTrackInfo()
         handler.post {infoLoop()}
 
-        //TODO make ip dynamically changeable by user and not fixed to my machine
+        getVolume()
+        handler.post {volumeLoop()}
     }
 
     override fun onStop(){
@@ -64,7 +83,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun stop(){
+    private fun stop(){
         thread{
             with(URL("http://192.168.0.15:10803/rhythmbox/stop").openConnection() as HttpURLConnection){
                 Log.v(TAG, "stop(): $responseCode")
@@ -73,7 +92,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun play(){
+    private fun play(){
         thread{
             with(URL("http://192.168.0.15:10803/rhythmbox/play").openConnection() as HttpURLConnection){
                 Log.v(TAG, "play(): $responseCode")
@@ -82,7 +101,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun pause(){
+    private fun pause(){
         thread{
             with(URL("http://192.168.0.15:10803/rhythmbox/pause").openConnection() as HttpURLConnection){
                 Log.v(TAG, "pause(): $responseCode")
@@ -91,7 +110,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun next(){
+    private fun next(){
         thread{
             with(URL("http://192.168.0.15:10803/rhythmbox/next").openConnection() as HttpURLConnection){
                 Log.v(TAG, "next(): $responseCode")
@@ -100,12 +119,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun infoLoop(){
+    private fun infoLoop(){
         updateTrackInfo()
         handler.postDelayed({ infoLoop() }, 1000)
     }
 
-    fun updateTrackInfo(){
+    private fun updateTrackInfo(){
         thread {
             val raw = URL("http://192.168.0.15:10803/rhythmbox/current-song").readText()
             val json = JSONObject(raw)
@@ -118,17 +137,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun getVolume(){
+    private fun volumeLoop(){
+        getVolume()
+        handler.postDelayed({ volumeLoop() }, 1000)
+    }
+
+    private fun getVolume(){
         thread{
             val raw = URL("http://192.168.0.15:10803/volume/get").readText()
             val json = JSONObject(raw)
-            Log.v(TAG, "volume: "+json.getString("volume"))
+            Log.v(TAG, "volume: "+json.getInt("volume"))
+            runOnUiThread{
+                volume = json.getInt("volume")
+                volume_label.text = getString(R.string.volume_format, json.getInt("volume"))
+            }
         }
     }
 
-    fun setVolume(value : Int){
+    private fun setVolume(value : Int){
+        volume = value
         thread{
-            with(URL("http://192.168.0.15:10803/volume/set/"+value).openConnection() as HttpURLConnection){
+            with(URL("http://192.168.0.15:10803/volume/set/$value").openConnection() as HttpURLConnection){
                 Log.v(TAG, "setVolume(): $responseCode")
             }
         }

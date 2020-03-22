@@ -59,7 +59,7 @@ app.get("/volume/get", function(req, res){
 		//console.log(stdout);
 		//console.log(stderr);
 		//GET_VOLUME doesnt seem to run the sed code.., equivalent below
-		let vol = 1*stdout.match(/[0-9]{2}%/)[0].replace("%", "");
+		let vol = 1*stdout.match(/[0-9]+%/)[0].replace("%", "");
 		//console.log(vol);
 		res.send(JSON.stringify({
 			"volume": vol

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">RhythmBox Remote</string>
+    <string name="app_name">Rhythmbox Remote</string>
 
     <string name="time_format">%1$s/%2$s</string>
 
@@ -8,5 +8,15 @@
     <string name="media_stop">\u23f9</string>
     <string name="media_play">\u25b6</string>
     <string name="media_pause">\u23f8</string>
+
+    <string name="media_speaker_volume_lower">\u1F509</string>
+    <string name="media_speaker_volume_higher">\u1F50A</string>
+    <string name="media_speaker_mute">\u1F507</string>
+
+    <string name="volume_label">Volume</string>
+    <string name="volume_lower">-</string>
+    <string name="volume_higher">+</string>
+    <string name="volume_mute">/</string>
+    <string name="volume_format">%1$d/100</string>
 
 </resources>
