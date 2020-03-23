@@ -19,4 +19,9 @@
     <string name="volume_mute">/</string>
     <string name="volume_format">%1$d/100</string>
 
+    <string name="ip_hint">Enter IP Address</string>
+    <string name="connect_label">Connect</string>
+
+    <string name="no_connection_error_toast">No Connection</string>
+
 </resources>

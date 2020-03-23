@@ -1,16 +1,30 @@
 package com.kyle.rhythmboxremote
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.InetAddresses
+import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.os.Handler
+import android.text.format.Formatter
 import android.util.Log
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import org.json.JSONObject
 import org.w3c.dom.Text
+import java.lang.Exception
+import java.math.BigInteger
 import java.net.HttpURLConnection
+import java.net.Inet4Address
+import java.net.InetAddress
 import java.net.URL
+import java.nio.ByteOrder
+import java.util.*
 import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
@@ -56,6 +70,7 @@ class MainActivity : AppCompatActivity() {
 
 
         //TODO make ip dynamically changeable by user and not fixed to my machine
+        scan()
     }
 
     override fun onResume() {
@@ -74,47 +89,111 @@ class MainActivity : AppCompatActivity() {
         handler.removeCallbacksAndMessages(null)
     }
 
+    private fun scan(){
+        thread{
+            val wifiMan = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+
+            var rawIp = wifiMan.connectionInfo.ipAddress
+            if(ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)){
+                rawIp = Integer.reverseBytes(rawIp)
+            }
+            val ipBytes = rawIp.toBigInteger().toByteArray()
+            val ip = InetAddress.getByAddress(ipBytes).hostAddress//InetAddress.getLocalHost().hostAddress
+
+            Log.d(TAG, "ip: $ip")
+            val ipParts = ip.split(".")
+            val netMask = ipParts[0]+"."+ipParts[1]+"."+ipParts[2]
+
+            //now scan the network on X.X.X.y where y is on [0,255] until we find a port open and get a return from our ping
+            for(i in 0..255){
+                Log.d(TAG, "checking $netMask.$i")
+                if(i.toString() != ipParts[3]){
+                    try {
+                        //URL("http://$netMask.$i:10803/rhythmbox/ping").
+                        with(URL("http://$netMask.$i:10803/rhythmbox/ping").openConnection() as HttpURLConnection) {
+                            connectTimeout = 100 //ms , fail fast if no reply
+                            Log.v(TAG, "scan(): $responseCode")
+                            //if its bad do something to tell user
+                            if (responseCode == 200) {
+                                Log.d(TAG, "found server on $netMask.$i")
+                                return@thread
+                            }
+                        }
+                    }catch (e : Exception){
+                        //no server continue
+                        Log.d(TAG, "no server at $netMask.$i")
+                    }
+                }
+            }
+        }
+    }
+
     private fun previous(){
         thread{
-            with(URL("http://192.168.0.15:10803/rhythmbox/previous").openConnection() as HttpURLConnection){
-                Log.v(TAG, "previous(): $responseCode")
-                //if its bad do something to tell user
+            try {
+                with(URL("http://192.168.0.15:10803/rhythmbox/previous").openConnection() as HttpURLConnection) {
+                    Log.v(TAG, "previous(): $responseCode")
+                    //if its bad do something to tell user
+                }
+            }catch(e : Exception){
+                e.printStackTrace()
+                showNoConnectionToast()
             }
         }
     }
 
     private fun stop(){
         thread{
-            with(URL("http://192.168.0.15:10803/rhythmbox/stop").openConnection() as HttpURLConnection){
-                Log.v(TAG, "stop(): $responseCode")
-                //if its bad do something to tell user
+            try{
+                with(URL("http://192.168.0.15:10803/rhythmbox/stop").openConnection() as HttpURLConnection){
+                    Log.v(TAG, "stop(): $responseCode")
+                    //if its bad do something to tell user
+                }
+            }catch(e : Exception){
+                e.printStackTrace()
+                showNoConnectionToast()
             }
         }
     }
 
     private fun play(){
         thread{
-            with(URL("http://192.168.0.15:10803/rhythmbox/play").openConnection() as HttpURLConnection){
-                Log.v(TAG, "play(): $responseCode")
-                //if its bad do something to tell user
+            try{
+                with(URL("http://192.168.0.15:10803/rhythmbox/play").openConnection() as HttpURLConnection){
+                    Log.v(TAG, "play(): $responseCode")
+                    //if its bad do something to tell user
+                }
+            }catch(e : Exception){
+                e.printStackTrace()
+                showNoConnectionToast()
             }
         }
     }
 
     private fun pause(){
         thread{
-            with(URL("http://192.168.0.15:10803/rhythmbox/pause").openConnection() as HttpURLConnection){
-                Log.v(TAG, "pause(): $responseCode")
-                //if its bad do something to tell user
+            try{
+                with(URL("http://192.168.0.15:10803/rhythmbox/pause").openConnection() as HttpURLConnection){
+                    Log.v(TAG, "pause(): $responseCode")
+                    //if its bad do something to tell user
+                }
+            }catch(e : Exception){
+                e.printStackTrace()
+                showNoConnectionToast()
             }
         }
     }
 
     private fun next(){
         thread{
-            with(URL("http://192.168.0.15:10803/rhythmbox/next").openConnection() as HttpURLConnection){
-                Log.v(TAG, "next(): $responseCode")
-                //if its bad do something to tell user
+            try {
+                with(URL("http://192.168.0.15:10803/rhythmbox/next").openConnection() as HttpURLConnection) {
+                    Log.v(TAG, "next(): $responseCode")
+                    //if its bad do something to tell user
+                }
+            }catch(e : Exception){
+                e.printStackTrace()
+                showNoConnectionToast()
             }
         }
     }
@@ -126,13 +205,23 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateTrackInfo(){
         thread {
-            val raw = URL("http://192.168.0.15:10803/rhythmbox/current-song").readText()
-            val json = JSONObject(raw)
-            runOnUiThread{
-                track.text = json.getString("track")
-                artist.text = json.getString("artist")
-                album.text = json.getString("album")
-                time.text = getString(R.string.time_format, json.getString("elapsed"), json.getString("duration"))
+            try {
+                val raw = URL("http://192.168.0.15:10803/rhythmbox/current-song").readText()
+                val json = JSONObject(raw)
+                runOnUiThread {
+                    track.text = json.getString("track")
+                    artist.text = json.getString("artist")
+                    album.text = json.getString("album")
+                    time.text = getString(R.string.time_format, json.getString("elapsed"), json.getString("duration"))
+                }
+            }catch(e : Exception){
+                e.printStackTrace()
+                runOnUiThread {
+                    track.text = getString(R.string.no_connection_error_toast)
+                    artist.text = ""
+                    album.text = ""
+                    time.text = getString(R.string.time_format, "0:00", "0:00")
+                }
             }
         }
     }
@@ -144,12 +233,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun getVolume(){
         thread{
-            val raw = URL("http://192.168.0.15:10803/volume/get").readText()
-            val json = JSONObject(raw)
-            Log.v(TAG, "volume: "+json.getInt("volume"))
-            runOnUiThread{
-                volume = json.getInt("volume")
-                volume_label.text = getString(R.string.volume_format, json.getInt("volume"))
+            try {
+                val raw = URL("http://192.168.0.15:10803/volume/get").readText()
+                val json = JSONObject(raw)
+                //Log.v(TAG, "volume: "+json.getInt("volume"))
+                runOnUiThread {
+                    volume = json.getInt("volume")
+                    volume_label.text = getString(R.string.volume_format, json.getInt("volume"))
+                }
+            }catch(e : Exception){
+                e.printStackTrace()
+                runOnUiThread {
+                    volume_label.text = getString(R.string.volume_format, 0)
+                }
             }
         }
     }
@@ -157,9 +253,20 @@ class MainActivity : AppCompatActivity() {
     private fun setVolume(value : Int){
         volume = value
         thread{
-            with(URL("http://192.168.0.15:10803/volume/set/$value").openConnection() as HttpURLConnection){
-                Log.v(TAG, "setVolume(): $responseCode")
+            try {
+                with(URL("http://192.168.0.15:10803/volume/set/$value").openConnection() as HttpURLConnection) {
+                    Log.v(TAG, "setVolume(): $responseCode")
+                }
+            }catch(e : Exception){
+                e.printStackTrace()
+                showNoConnectionToast()
             }
+        }
+    }
+
+    private fun showNoConnectionToast(){
+        runOnUiThread {
+            Toast.makeText(this, R.string.no_connection_error_toast, Toast.LENGTH_SHORT).show()
         }
     }
 }
