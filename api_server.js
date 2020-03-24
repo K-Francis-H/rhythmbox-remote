@@ -33,6 +33,11 @@ var port = HTTP_PORT;
 
 httpServer.listen(port);
 
+app.get("/rhythmbox/ping", function(req, res){
+	res.sendStatus(200);
+	//TODO maybe send "uname -n" output instead so they can be identified if multiple also ifconfig ip
+});
+
 app.get("/volume/get", function(req, res){
 	/*vol.get().then(level => {
 	    	console.log(level);

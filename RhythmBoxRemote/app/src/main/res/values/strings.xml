@@ -22,6 +22,9 @@
     <string name="ip_hint">Enter IP Address</string>
     <string name="connect_label">Connect</string>
 
+    <string name="scanning">Scanning for servers</string>
+    <string name="scan_complete">Scan Complete</string>
+
     <string name="no_connection_error_toast">No Connection</string>
 
 </resources>
