@@ -28,4 +28,14 @@
         android:layout_gravity="center"
         android:id="@+id/progress"/>
 
+    <!--<EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/ip_hint"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/connect_label"/>-->
+
 </LinearLayout>

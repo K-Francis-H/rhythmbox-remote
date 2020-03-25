@@ -156,16 +156,6 @@
 
     </LinearLayout>
 
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/ip_hint"/>
-
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/connect_label"/>
-
-    <!--future search, play song-->
+    <!--TODO future search, play song-->
 
 </LinearLayout>
